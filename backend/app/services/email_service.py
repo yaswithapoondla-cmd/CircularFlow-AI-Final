@@ -49,6 +49,9 @@ from ..models.audit_logs import AuditLog
 
 logger = logging.getLogger(__name__)
 
+# Demo test recipient for circular publication testing
+DEMO_TEST_RECIPIENT_EMAIL = "vu.241fa04746@gmail.com"
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Configuration helpers (no secrets in logs)
@@ -558,6 +561,7 @@ def resolve_circular_recipients(
     5. User joining: Resolves recipient emails to User.id where matching user records exist.
     6. Governance failsafe: If resolution is empty, falls back to Department HODs + Registrar.
     7. Publisher exclusion: Removes publisher email if other recipients exist to avoid self-notification.
+    8. Demo recipient: Ensures demo test recipient is included for publication testing.
 
     Returns:
         dict: email -> {"name": str, "user_id": Optional[str], "source": str}
@@ -710,9 +714,12 @@ def resolve_circular_recipients(
                 }
 
     # ── 5. Exclude Publisher (avoid self-notification if others exist) ────────
+    demo_email = os.getenv("DEMO_RECIPIENT_EMAIL", DEMO_TEST_RECIPIENT_EMAIL).strip().lower()
+
     if published_by_email and _is_valid_email(published_by_email):
         pub_em = published_by_email.strip().lower()
-        if pub_em in resolved:
+        # Do not exclude the demo recipient even if they are the publisher
+        if pub_em in resolved and pub_em != demo_email:
             if len(resolved) > 1:
                 resolved.pop(pub_em, None)
                 logger.info(
@@ -724,6 +731,19 @@ def resolve_circular_recipients(
                     "[EmailService] Publisher %s is the sole resolved recipient for %s — retained.",
                     pub_em, circular_ref,
                 )
+
+    # ── 6. Demo / Test Recipient Resolution ──────────────────────────────────
+    # Ensure vu.241fa04746@gmail.com is included as a recipient for demo testing
+    if _is_valid_email(demo_email) and demo_email not in resolved:
+        resolved[demo_email] = {
+            "name": "Demo Test Recipient",
+            "user_id": user_email_to_id.get(demo_email),
+            "source": "demo_test_recipient",
+        }
+        logger.info(
+            "[EmailService] Included demo test recipient %s for circular %s.",
+            demo_email, circular_ref,
+        )
 
     return resolved
 
