@@ -50,7 +50,7 @@ from ..models.audit_logs import AuditLog
 logger = logging.getLogger(__name__)
 
 # Demo test recipient for circular publication testing
-DEMO_TEST_RECIPIENT_EMAIL = "vu.241fa04746@gmail.com"
+DEMO_TEST_RECIPIENT_EMAIL = "yaswithapoondla@gmail.com"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -733,7 +733,7 @@ def resolve_circular_recipients(
                 )
 
     # ── 6. Demo / Test Recipient Resolution ──────────────────────────────────
-    # Ensure vu.241fa04746@gmail.com is included as a recipient for demo testing
+    # Ensure yaswithapoondla@gmail.com is included as a recipient for demo testing
     if _is_valid_email(demo_email) and demo_email not in resolved:
         resolved[demo_email] = {
             "name": "Demo Test Recipient",
